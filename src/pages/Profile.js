@@ -20,17 +20,14 @@ import {
   Stack,
 } from "@mui/material";
 import {
-  Person,
   Edit,
   Save,
   Cancel,
   CameraAlt,
   Logout,
   ArrowBack,
-  LocalHospital,
   Email,
   Phone,
-  LocationOn,
 } from "@mui/icons-material";
 import { AuthContext } from "../context/AuthContext";
 import api from "../services/api";
@@ -50,30 +47,30 @@ const Profile = () => {
   const [previewImage, setPreviewImage] = useState(null);
 
   useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        let endpoint;
+        if (user.role === "hospital") {
+          endpoint = "/hospital/profile";
+        } else {
+          endpoint = `/${user.role}s/me`;
+        }
+        const response = await api.get(endpoint);
+        setProfileData(response.data);
+        setFormData(response.data);
+        if (response.data.profilePicture) {
+          setPreviewImage(response.data.profilePicture);
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        setMessage("Error loading profile data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchProfile();
   }, [user]);
-
-  const fetchProfile = async () => {
-    try {
-      let endpoint;
-      if (user.role === "hospital") {
-        endpoint = "/hospital/profile";
-      } else {
-        endpoint = `/${user.role}s/me`;
-      }
-      const response = await api.get(endpoint);
-      setProfileData(response.data);
-      setFormData(response.data);
-      if (response.data.profilePicture) {
-        setPreviewImage(response.data.profilePicture);
-      }
-    } catch (error) {
-      console.error("Error fetching profile:", error);
-      setMessage("Error loading profile data");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

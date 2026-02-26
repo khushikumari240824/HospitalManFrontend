@@ -23,8 +23,6 @@ import {
   Alert,
   Tabs,
   Tab,
-  Card,
-  CardContent,
   Grid,
   Chip,
   Avatar,
@@ -38,13 +36,11 @@ import {
   Stack,
 } from "@mui/material";
 import {
-  LocalHospital,
   Logout,
   CalendarToday,
   MedicalServices,
   Person,
   CheckCircle,
-  Cancel,
   Schedule,
   AddBox,
   History,
