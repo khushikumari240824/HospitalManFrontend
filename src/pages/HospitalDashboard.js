@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Container,
   AppBar,
@@ -23,20 +23,20 @@ import {
   Alert,
   alpha,
   Stack,
-  IconButton
-} from '@mui/material';
+  IconButton,
+} from "@mui/material";
 import {
   Logout,
   People,
   MedicalServices,
   CalendarToday,
   Assignment,
-  Person
-} from '@mui/icons-material';
-import { AuthContext } from '../context/AuthContext';
-import axios from 'axios';
-import StatsCard from '../components/common/StatsCard';
-import PageHeader from '../components/common/PageHeader';
+  Person,
+} from "@mui/icons-material";
+import { AuthContext } from "../context/AuthContext";
+import api from "../services/api";
+import StatsCard from "../components/common/StatsCard";
+import PageHeader from "../components/common/PageHeader";
 
 const HospitalDashboard = () => {
   const { user, logout } = useContext(AuthContext);
@@ -50,15 +50,15 @@ const HospitalDashboard = () => {
   const [appointments, setAppointments] = useState([]);
   const [medicalRecords, setMedicalRecords] = useState([]);
   const [tabValue, setTabValue] = useState(() => {
-    const savedTab = localStorage.getItem('hospitalDashboardTab');
+    const savedTab = localStorage.getItem("hospitalDashboardTab");
     return savedTab ? parseInt(savedTab, 10) : 0;
   });
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
-    localStorage.setItem('hospitalDashboardTab', newValue);
+    localStorage.setItem("hospitalDashboardTab", newValue);
   };
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetchDashboardData(); // Initial load
@@ -68,13 +68,20 @@ const HospitalDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const [statsRes, patientsRes, doctorsRes, pendingRes, appointmentsRes, recordsRes] = await Promise.all([
-        axios.get('/api/hospital/dashboard'),
-        axios.get('/api/patients/all'),
-        axios.get('/api/doctors/hospital/all'),
-        axios.get('/api/hospital/doctors/pending'),
-        axios.get('/api/appointments/all'),
-        axios.get('/api/medical-records/all')
+      const [
+        statsRes,
+        patientsRes,
+        doctorsRes,
+        pendingRes,
+        appointmentsRes,
+        recordsRes,
+      ] = await Promise.all([
+        api.get("/hospital/dashboard"),
+        api.get("/patients/all"),
+        api.get("/doctors/hospital/all"),
+        api.get("/hospital/doctors/pending"),
+        api.get("/appointments/all"),
+        api.get("/medical-records/all"),
       ]);
       setStats(statsRes.data);
       setPatients(patientsRes.data);
@@ -83,62 +90,87 @@ const HospitalDashboard = () => {
       setAppointments(appointmentsRes.data);
       setMedicalRecords(recordsRes.data);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      setError('Failed to load dashboard data. Please try again later.');
+      console.error("Error fetching dashboard data:", error);
+      setError("Failed to load dashboard data. Please try again later.");
     }
   };
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case 'confirmed': return 'success';
-      case 'pending': return 'warning';
-      case 'cancelled': return 'error';
-      default: return 'default';
+      case "confirmed":
+        return "success";
+      case "pending":
+        return "warning";
+      case "cancelled":
+        return "error";
+      default:
+        return "default";
     }
   };
 
   const handleApproveDoctor = async (doctorId) => {
     try {
-      await axios.patch(`/api/hospital/doctors/${doctorId}/approve`);
-      setPendingDoctors(pendingDoctors.filter(doc => doc._id !== doctorId));
+      await api.patch(`/hospital/doctors/${doctorId}/approve`);
+      setPendingDoctors(pendingDoctors.filter((doc) => doc._id !== doctorId));
       fetchDashboardData(); // Refresh data
     } catch (error) {
-      console.error('Error approving doctor:', error);
-      setError('Failed to approve doctor.');
+      console.error("Error approving doctor:", error);
+      setError("Failed to approve doctor.");
     }
   };
 
   const handleRejectDoctor = async (doctorId) => {
     try {
-      await axios.patch(`/api/hospital/doctors/${doctorId}/reject`);
-      setPendingDoctors(pendingDoctors.filter(doc => doc._id !== doctorId));
+      await api.patch(`/hospital/doctors/${doctorId}/reject`);
+      setPendingDoctors(pendingDoctors.filter((doc) => doc._id !== doctorId));
       fetchDashboardData(); // Refresh data
     } catch (error) {
-      console.error('Error rejecting doctor:', error);
-      setError('Failed to reject doctor.');
+      console.error("Error rejecting doctor:", error);
+      setError("Failed to reject doctor.");
     }
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 4 }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default", pb: 4 }}>
       {/* Navigation */}
-      <AppBar position="sticky" elevation={0} sx={{ bgcolor: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(12px)', borderBottom: '1px solid', borderColor: 'divider' }}>
+      <AppBar
+        position="sticky"
+        elevation={0}
+        sx={{
+          bgcolor: "rgba(255,255,255,0.8)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
         <Toolbar sx={{ gap: 2 }}>
           {/* <Business sx={{ mr: 2, fontSize: 32, color: 'primary.main' }} /> */}
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 700, color: 'text.primary', letterSpacing: '-0.02em' }}>
-            Hospital<Box component="span" sx={{ color: 'primary.main' }}>Admin</Box>
+          <Typography
+            variant="h6"
+            component="div"
+            sx={{
+              flexGrow: 1,
+              fontWeight: 700,
+              color: "text.primary",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Hospital
+            <Box component="span" sx={{ color: "primary.main" }}>
+              Admin
+            </Box>
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Button
               color="inherit"
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate("/profile")}
               startIcon={<Person />}
-              sx={{ borderRadius: '10px', px: 2 }}
+              sx={{ borderRadius: "10px", px: 2 }}
             >
               Profile
             </Button>
@@ -147,7 +179,7 @@ const HospitalDashboard = () => {
               color="error"
               onClick={handleLogout}
               startIcon={<Logout />}
-              sx={{ borderRadius: '10px', px: 2, boxShadow: 'none' }}
+              sx={{ borderRadius: "10px", px: 2, boxShadow: "none" }}
             >
               Logout
             </Button>
@@ -157,11 +189,15 @@ const HospitalDashboard = () => {
 
       <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
         <PageHeader
-          title={`Welcome, ${user?.name || 'Admin'}`}
+          title={`Welcome, ${user?.name || "Admin"}`}
           subtitle="Hospital Overview & Management"
         />
 
-        {error && <Alert severity="error" sx={{ mb: 3, borderRadius: '16px' }}>{error}</Alert>}
+        {error && (
+          <Alert severity="error" sx={{ mb: 3, borderRadius: "16px" }}>
+            {error}
+          </Alert>
+        )}
 
         <Grid container spacing={3} sx={{ mb: 5 }}>
           <Grid item xs={12} sm={6} md={3}>
@@ -201,11 +237,11 @@ const HospitalDashboard = () => {
         <Paper
           elevation={0}
           sx={{
-            borderRadius: '24px',
-            border: '1px solid',
-            borderColor: 'divider',
-            overflow: 'hidden',
-            boxShadow: '0 4px 20px -5px rgba(0,0,0,0.05)'
+            borderRadius: "24px",
+            border: "1px solid",
+            borderColor: "divider",
+            overflow: "hidden",
+            boxShadow: "0 4px 20px -5px rgba(0,0,0,0.05)",
           }}
         >
           <Tabs
@@ -213,22 +249,42 @@ const HospitalDashboard = () => {
             onChange={handleTabChange}
             sx={{
               borderBottom: 1,
-              borderColor: 'divider',
-              bgcolor: 'background.paper',
+              borderColor: "divider",
+              bgcolor: "background.paper",
               px: 2,
-              '& .MuiTab-root': {
+              "& .MuiTab-root": {
                 minHeight: 64,
-                fontSize: '0.95rem',
+                fontSize: "0.95rem",
                 fontWeight: 600,
-                textTransform: 'none',
-              }
+                textTransform: "none",
+              },
             }}
           >
-            <Tab label="Patients" icon={<People sx={{ fontSize: 20 }} />} iconPosition="start" />
-            <Tab label="Doctors" icon={<MedicalServices sx={{ fontSize: 20 }} />} iconPosition="start" />
-            <Tab label="Doctor Approvals" icon={<Person sx={{ fontSize: 20 }} />} iconPosition="start" />
-            <Tab label="Appointments" icon={<CalendarToday sx={{ fontSize: 20 }} />} iconPosition="start" />
-            <Tab label="Medical Records" icon={<Assignment sx={{ fontSize: 20 }} />} iconPosition="start" />
+            <Tab
+              label="Patients"
+              icon={<People sx={{ fontSize: 20 }} />}
+              iconPosition="start"
+            />
+            <Tab
+              label="Doctors"
+              icon={<MedicalServices sx={{ fontSize: 20 }} />}
+              iconPosition="start"
+            />
+            <Tab
+              label="Doctor Approvals"
+              icon={<Person sx={{ fontSize: 20 }} />}
+              iconPosition="start"
+            />
+            <Tab
+              label="Appointments"
+              icon={<CalendarToday sx={{ fontSize: 20 }} />}
+              iconPosition="start"
+            />
+            <Tab
+              label="Medical Records"
+              icon={<Assignment sx={{ fontSize: 20 }} />}
+              iconPosition="start"
+            />
           </Tabs>
 
           {/* Patients Tab */}
@@ -237,12 +293,32 @@ const HospitalDashboard = () => {
               <TableContainer>
                 <Table sx={{ minWidth: 800 }}>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: 'grey.50' }}>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Name</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Date of Birth</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Gender</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Phone</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Blood Group</TableCell>
+                    <TableRow sx={{ bgcolor: "grey.50" }}>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Name
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Date of Birth
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Gender
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Phone
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Blood Group
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -251,42 +327,85 @@ const HospitalDashboard = () => {
                         key={patient._id}
                         hover
                         sx={{
-                          '&:last-child td, &:last-child th': { border: 0 },
-                          transition: 'all 0.2s',
-                          '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.02) }
+                          "&:last-child td, &:last-child th": { border: 0 },
+                          transition: "all 0.2s",
+                          "&:hover": {
+                            bgcolor: alpha(theme.palette.primary.main, 0.02),
+                          },
                         }}
                       >
                         <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                            <Avatar sx={{ width: 40, height: 40, bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main' }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1.5,
+                            }}
+                          >
+                            <Avatar
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                color: "primary.main",
+                              }}
+                            >
                               {patient.firstName?.[0]}
                             </Avatar>
                             <Box>
-                              <Typography variant="body2" fontWeight={600} color="text.primary">
+                              <Typography
+                                variant="body2"
+                                fontWeight={600}
+                                color="text.primary"
+                              >
                                 {patient.firstName} {patient.lastName}
                               </Typography>
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
                                 ID: {patient._id?.substring(0, 8)}...
                               </Typography>
                             </Box>
                           </Box>
                         </TableCell>
-                        <TableCell>{new Date(patient.dateOfBirth).toLocaleDateString()}</TableCell>
-                        <TableCell sx={{ textTransform: 'capitalize' }}>{patient.gender}</TableCell>
+                        <TableCell>
+                          {new Date(patient.dateOfBirth).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell sx={{ textTransform: "capitalize" }}>
+                          {patient.gender}
+                        </TableCell>
                         <TableCell>{patient.phone}</TableCell>
                         <TableCell>
                           {patient.bloodGroup ? (
-                            <Chip label={patient.bloodGroup} size="small" color="error" variant="outlined" sx={{ fontWeight: 600 }} />
-                          ) : '-'}
+                            <Chip
+                              label={patient.bloodGroup}
+                              size="small"
+                              color="error"
+                              variant="outlined"
+                              sx={{ fontWeight: 600 }}
+                            />
+                          ) : (
+                            "-"
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
                     {patients.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              opacity: 0.5,
+                            }}
+                          >
                             <People sx={{ fontSize: 48, mb: 1 }} />
-                            <Typography variant="h6">No patients found</Typography>
+                            <Typography variant="h6">
+                              No patients found
+                            </Typography>
                           </Box>
                         </TableCell>
                       </TableRow>
@@ -303,12 +422,32 @@ const HospitalDashboard = () => {
               <TableContainer>
                 <Table sx={{ minWidth: 800 }}>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: 'grey.50' }}>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Name</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Specialization</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Department</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>License</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Phone</TableCell>
+                    <TableRow sx={{ bgcolor: "grey.50" }}>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Name
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Specialization
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Department
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        License
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Phone
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -317,27 +456,62 @@ const HospitalDashboard = () => {
                         key={doctor._id}
                         hover
                         sx={{
-                          '&:last-child td, &:last-child th': { border: 0 },
-                          transition: 'all 0.2s',
-                          '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.02) }
+                          "&:last-child td, &:last-child th": { border: 0 },
+                          transition: "all 0.2s",
+                          "&:hover": {
+                            bgcolor: alpha(theme.palette.primary.main, 0.02),
+                          },
                         }}
                       >
                         <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                            <Avatar sx={{ width: 40, height: 40, bgcolor: alpha(theme.palette.secondary.main, 0.1), color: 'secondary.main' }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1.5,
+                            }}
+                          >
+                            <Avatar
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                bgcolor: alpha(
+                                  theme.palette.secondary.main,
+                                  0.1,
+                                ),
+                                color: "secondary.main",
+                              }}
+                            >
                               {doctor.firstName?.[0]}
                             </Avatar>
-                            <Typography variant="body2" fontWeight={600} color="text.primary">
+                            <Typography
+                              variant="body2"
+                              fontWeight={600}
+                              color="text.primary"
+                            >
                               Dr. {doctor.firstName} {doctor.lastName}
                             </Typography>
                           </Box>
                         </TableCell>
                         <TableCell>
-                          <Chip label={doctor.specialization} size="small" color="primary" variant="outlined" />
+                          <Chip
+                            label={doctor.specialization}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                          />
                         </TableCell>
                         <TableCell>{doctor.department}</TableCell>
                         <TableCell>
-                          <Typography variant="body2" sx={{ fontFamily: 'monospace', bgcolor: 'grey.100', px: 1, borderRadius: 1 }}>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "monospace",
+                              bgcolor: "grey.100",
+                              px: 1,
+                              borderRadius: 1,
+                            }}
+                          >
                             {doctor.licenseNumber}
                           </Typography>
                         </TableCell>
@@ -347,9 +521,18 @@ const HospitalDashboard = () => {
                     {doctors.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              opacity: 0.5,
+                            }}
+                          >
                             <MedicalServices sx={{ fontSize: 48, mb: 1 }} />
-                            <Typography variant="h6">No doctors found</Typography>
+                            <Typography variant="h6">
+                              No doctors found
+                            </Typography>
                           </Box>
                         </TableCell>
                       </TableRow>
@@ -364,20 +547,50 @@ const HospitalDashboard = () => {
           {tabValue === 2 && (
             <Box sx={{ p: 0 }}>
               {pendingDoctors.length === 0 ? (
-                <Box sx={{ py: 8, display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5 }}>
+                <Box
+                  sx={{
+                    py: 8,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    opacity: 0.5,
+                  }}
+                >
                   <Person sx={{ fontSize: 48, mb: 1 }} />
-                  <Typography variant="h6">No pending doctor approvals</Typography>
+                  <Typography variant="h6">
+                    No pending doctor approvals
+                  </Typography>
                 </Box>
               ) : (
                 <TableContainer>
                   <Table sx={{ minWidth: 800 }}>
                     <TableHead>
-                      <TableRow sx={{ bgcolor: 'grey.50' }}>
-                        <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Name</TableCell>
-                        <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Email</TableCell>
-                        <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Specialization</TableCell>
-                        <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>License Number</TableCell>
-                        <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Actions</TableCell>
+                      <TableRow sx={{ bgcolor: "grey.50" }}>
+                        <TableCell
+                          sx={{ fontWeight: 600, color: "text.secondary" }}
+                        >
+                          Name
+                        </TableCell>
+                        <TableCell
+                          sx={{ fontWeight: 600, color: "text.secondary" }}
+                        >
+                          Email
+                        </TableCell>
+                        <TableCell
+                          sx={{ fontWeight: 600, color: "text.secondary" }}
+                        >
+                          Specialization
+                        </TableCell>
+                        <TableCell
+                          sx={{ fontWeight: 600, color: "text.secondary" }}
+                        >
+                          License Number
+                        </TableCell>
+                        <TableCell
+                          sx={{ fontWeight: 600, color: "text.secondary" }}
+                        >
+                          Actions
+                        </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -385,7 +598,7 @@ const HospitalDashboard = () => {
                         <TableRow
                           key={doctor._id}
                           sx={{
-                            '&:last-child td, &:last-child th': { border: 0 }
+                            "&:last-child td, &:last-child th": { border: 0 },
                           }}
                         >
                           <TableCell>
@@ -395,7 +608,11 @@ const HospitalDashboard = () => {
                           </TableCell>
                           <TableCell>{doctor.userId?.email}</TableCell>
                           <TableCell>
-                            <Chip label={doctor.specialization} size="small" color="default" />
+                            <Chip
+                              label={doctor.specialization}
+                              size="small"
+                              color="default"
+                            />
                           </TableCell>
                           <TableCell>{doctor.licenseNumber}</TableCell>
                           <TableCell>
@@ -406,7 +623,7 @@ const HospitalDashboard = () => {
                                 size="small"
                                 onClick={() => handleApproveDoctor(doctor._id)}
                                 disableElevation
-                                sx={{ borderRadius: '8px' }}
+                                sx={{ borderRadius: "8px" }}
                               >
                                 Approve
                               </Button>
@@ -415,7 +632,7 @@ const HospitalDashboard = () => {
                                 color="error"
                                 size="small"
                                 onClick={() => handleRejectDoctor(doctor._id)}
-                                sx={{ borderRadius: '8px' }}
+                                sx={{ borderRadius: "8px" }}
                               >
                                 Reject
                               </Button>
@@ -436,11 +653,27 @@ const HospitalDashboard = () => {
               <TableContainer>
                 <Table sx={{ minWidth: 800 }}>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: 'grey.50' }}>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Date & Time</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Patient</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Doctor</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Status</TableCell>
+                    <TableRow sx={{ bgcolor: "grey.50" }}>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Date & Time
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Patient
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Doctor
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Status
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -449,31 +682,49 @@ const HospitalDashboard = () => {
                         key={appointment._id}
                         hover
                         sx={{
-                          '&:last-child td, &:last-child th': { border: 0 },
-                          transition: 'all 0.2s',
-                          '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.02) }
+                          "&:last-child td, &:last-child th": { border: 0 },
+                          transition: "all 0.2s",
+                          "&:hover": {
+                            bgcolor: alpha(theme.palette.primary.main, 0.02),
+                          },
                         }}
                       >
                         <TableCell>
-                          <Typography variant="body2" fontWeight={600} color="text.primary">
-                            {new Date(appointment.appointmentDate).toLocaleDateString()}
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                            color="text.primary"
+                          >
+                            {new Date(
+                              appointment.appointmentDate,
+                            ).toLocaleDateString()}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
                             {appointment.appointmentTime}
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2">{appointment.patientId?.firstName} {appointment.patientId?.lastName}</Typography>
+                          <Typography variant="body2">
+                            {appointment.patientId?.firstName}{" "}
+                            {appointment.patientId?.lastName}
+                          </Typography>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" fontWeight={500}>Dr. {appointment.doctorId?.firstName} {appointment.doctorId?.lastName}</Typography>
+                          <Typography variant="body2" fontWeight={500}>
+                            Dr. {appointment.doctorId?.firstName}{" "}
+                            {appointment.doctorId?.lastName}
+                          </Typography>
                         </TableCell>
                         <TableCell>
                           <Chip
                             label={appointment.status}
                             color={getStatusColor(appointment.status)}
                             size="small"
-                            sx={{ borderRadius: '8px', fontWeight: 600, textTransform: 'capitalize' }}
+                            sx={{
+                              borderRadius: "8px",
+                              fontWeight: 600,
+                              textTransform: "capitalize",
+                            }}
                           />
                         </TableCell>
                       </TableRow>
@@ -481,9 +732,18 @@ const HospitalDashboard = () => {
                     {appointments.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={4} align="center" sx={{ py: 8 }}>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              opacity: 0.5,
+                            }}
+                          >
                             <CalendarToday sx={{ fontSize: 48, mb: 1 }} />
-                            <Typography variant="h6">No appointments found</Typography>
+                            <Typography variant="h6">
+                              No appointments found
+                            </Typography>
                           </Box>
                         </TableCell>
                       </TableRow>
@@ -497,19 +757,44 @@ const HospitalDashboard = () => {
           {/* Medical Records Tab */}
           {tabValue === 4 && (
             <Box>
-              <Alert severity="info" sx={{ m: 2, borderRadius: '12px' }}>
-                Complete medical records and reports for all patients in the hospital system.
+              <Alert severity="info" sx={{ m: 2, borderRadius: "12px" }}>
+                Complete medical records and reports for all patients in the
+                hospital system.
               </Alert>
               <TableContainer>
                 <Table sx={{ minWidth: 800 }}>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: 'grey.50' }}>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Date & Time</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Patient</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Doctor</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Specialization</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Diagnosis</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Treatment</TableCell>
+                    <TableRow sx={{ bgcolor: "grey.50" }}>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Date & Time
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Patient
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Doctor
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Specialization
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Diagnosis
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Treatment
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -518,13 +803,19 @@ const HospitalDashboard = () => {
                         key={record._id}
                         hover
                         sx={{
-                          '&:last-child td, &:last-child th': { border: 0 },
-                          transition: 'all 0.2s',
-                          '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.02) }
+                          "&:last-child td, &:last-child th": { border: 0 },
+                          transition: "all 0.2s",
+                          "&:hover": {
+                            bgcolor: alpha(theme.palette.primary.main, 0.02),
+                          },
                         }}
                       >
                         <TableCell>
-                          <Typography variant="body2" fontWeight={600} color="text.primary">
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                            color="text.primary"
+                          >
                             {new Date(record.createdAt).toLocaleDateString()}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
@@ -533,53 +824,110 @@ const HospitalDashboard = () => {
                         </TableCell>
                         {/* Patient Column */}
                         <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                            <Avatar sx={{ width: 40, height: 40, bgcolor: alpha(theme.palette.success.main, 0.1), color: 'success.main', fontSize: '1rem' }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1.5,
+                            }}
+                          >
+                            <Avatar
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                bgcolor: alpha(theme.palette.success.main, 0.1),
+                                color: "success.main",
+                                fontSize: "1rem",
+                              }}
+                            >
                               {record.patientId?.firstName?.[0]}
                             </Avatar>
                             <Box>
-                              <Typography variant="subtitle2" fontWeight={600} color="text.primary">
-                                {record.patientId?.firstName} {record.patientId?.lastName}
+                              <Typography
+                                variant="subtitle2"
+                                fontWeight={600}
+                                color="text.primary"
+                              >
+                                {record.patientId?.firstName}{" "}
+                                {record.patientId?.lastName}
                               </Typography>
-                              <Typography variant="caption" display="block" color="text.secondary">
-                                ID: {record.patientId?._id?.slice(-8).toUpperCase() || 'N/A'}
+                              <Typography
+                                variant="caption"
+                                display="block"
+                                color="text.secondary"
+                              >
+                                ID:{" "}
+                                {record.patientId?._id
+                                  ?.slice(-8)
+                                  .toUpperCase() || "N/A"}
                               </Typography>
                             </Box>
                           </Box>
                         </TableCell>
                         {/* Doctor Column */}
                         <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                            <Avatar sx={{ width: 40, height: 40, bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main', fontSize: '1rem' }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1.5,
+                            }}
+                          >
+                            <Avatar
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                                color: "primary.main",
+                                fontSize: "1rem",
+                              }}
+                            >
                               {record.doctorId?.firstName?.[0]}
                             </Avatar>
                             <Box>
-                              <Typography variant="subtitle2" fontWeight={600} color="text.primary">
-                                Dr. {record.doctorId?.firstName} {record.doctorId?.lastName}
+                              <Typography
+                                variant="subtitle2"
+                                fontWeight={600}
+                                color="text.primary"
+                              >
+                                Dr. {record.doctorId?.firstName}{" "}
+                                {record.doctorId?.lastName}
                               </Typography>
-                              <Typography variant="caption" display="block" color="text.secondary">
-                                {record.doctorId?.specialization || 'General'}
+                              <Typography
+                                variant="caption"
+                                display="block"
+                                color="text.secondary"
+                              >
+                                {record.doctorId?.specialization || "General"}
                               </Typography>
                             </Box>
                           </Box>
                         </TableCell>
                         <TableCell>
                           <Chip
-                            label={record.doctorId?.specialization || 'N/A'}
+                            label={record.doctorId?.specialization || "N/A"}
                             size="small"
                             color="default"
                             variant="outlined"
-                            sx={{ borderRadius: '6px', fontWeight: 500 }}
+                            sx={{ borderRadius: "6px", fontWeight: 500 }}
                           />
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" noWrap sx={{ maxWidth: 200, fontWeight: 500 }}>
-                            {record.diagnosis || '-'}
+                          <Typography
+                            variant="body2"
+                            noWrap
+                            sx={{ maxWidth: 200, fontWeight: 500 }}
+                          >
+                            {record.diagnosis || "-"}
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" noWrap sx={{ maxWidth: 200, color: 'text.secondary' }}>
-                            {record.treatment || '-'}
+                          <Typography
+                            variant="body2"
+                            noWrap
+                            sx={{ maxWidth: 200, color: "text.secondary" }}
+                          >
+                            {record.treatment || "-"}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -587,11 +935,21 @@ const HospitalDashboard = () => {
                     {medicalRecords.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              opacity: 0.5,
+                            }}
+                          >
                             <Assignment sx={{ fontSize: 48, mb: 1 }} />
-                            <Typography variant="h6">No medical records found</Typography>
+                            <Typography variant="h6">
+                              No medical records found
+                            </Typography>
                             <Typography variant="body2">
-                              Medical records will appear here once doctors create them.
+                              Medical records will appear here once doctors
+                              create them.
                             </Typography>
                           </Box>
                         </TableCell>

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Container,
   AppBar,
@@ -35,8 +35,8 @@ import {
   Divider,
   useTheme,
   alpha,
-  Stack
-} from '@mui/material';
+  Stack,
+} from "@mui/material";
 import {
   LocalHospital,
   Logout,
@@ -47,12 +47,12 @@ import {
   Cancel,
   Schedule,
   AddBox,
-  History
-} from '@mui/icons-material';
-import { AuthContext } from '../context/AuthContext';
-import axios from 'axios';
-import StatsCard from '../components/common/StatsCard';
-import PageHeader from '../components/common/PageHeader';
+  History,
+} from "@mui/icons-material";
+import { AuthContext } from "../context/AuthContext";
+import api from "../services/api";
+import StatsCard from "../components/common/StatsCard";
+import PageHeader from "../components/common/PageHeader";
 
 const DoctorDashboard = () => {
   const { user, logout } = useContext(AuthContext);
@@ -69,20 +69,28 @@ const DoctorDashboard = () => {
   const [openHistory, setOpenHistory] = useState(false);
 
   // Data
-  const [adviceData, setAdviceData] = useState({ advice: '', prescription: '' });
-  const [reportData, setReportData] = useState({ patientId: '', diagnosis: '', treatment: '', notes: '' });
+  const [adviceData, setAdviceData] = useState({
+    advice: "",
+    prescription: "",
+  });
+  const [reportData, setReportData] = useState({
+    patientId: "",
+    diagnosis: "",
+    treatment: "",
+    notes: "",
+  });
   const [selectedPatientHistory, setSelectedPatientHistory] = useState(null);
 
   const [tabValue, setTabValue] = useState(() => {
-    const savedTab = localStorage.getItem('doctorDashboardTab');
+    const savedTab = localStorage.getItem("doctorDashboardTab");
     return savedTab ? parseInt(savedTab, 10) : 0;
   });
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
-    localStorage.setItem('doctorDashboardTab', newValue);
+    localStorage.setItem("doctorDashboardTab", newValue);
   };
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const loadData = () => {
@@ -98,19 +106,19 @@ const DoctorDashboard = () => {
 
   const fetchAppointments = async () => {
     try {
-      const response = await axios.get('/api/appointments/doctor');
+      const response = await api.get("/appointments/doctor");
       setAppointments(response.data);
     } catch (error) {
-      console.error('Error fetching appointments:', error);
+      console.error("Error fetching appointments:", error);
     }
   };
 
   const fetchMedicalRecords = async () => {
     try {
-      const response = await axios.get('/api/medical-records/doctor');
+      const response = await api.get("/medical-records/doctor");
       setMedicalRecords(response.data);
     } catch (error) {
-      console.error('Error fetching medical records:', error);
+      console.error("Error fetching medical records:", error);
     }
   };
 
@@ -118,90 +126,141 @@ const DoctorDashboard = () => {
 
   const handleStatusChange = async (appointmentId, status) => {
     try {
-      await axios.patch(`/api/appointments/${appointmentId}/status`, { status });
-      setMessage('Status updated successfully!');
+      await api.patch(`/appointments/${appointmentId}/status`, { status });
+      setMessage("Status updated successfully!");
       fetchAppointments();
     } catch (error) {
-      setMessage('Error updating status: ' + (error.response?.data?.message || error.message));
+      setMessage(
+        "Error updating status: " +
+          (error.response?.data?.message || error.message),
+      );
     }
   };
 
   const handleOpenAdvice = (appointment) => {
     setSelectedAppointment(appointment);
-    setAdviceData({ advice: appointment.advice || '', prescription: appointment.prescription || '' });
+    setAdviceData({
+      advice: appointment.advice || "",
+      prescription: appointment.prescription || "",
+    });
     setOpenAdvice(true);
   };
 
   const handleSubmitAdvice = async () => {
     try {
-      await axios.patch(`/api/appointments/${selectedAppointment._id}/advice`, adviceData);
-      setMessage('Advice added successfully!');
+      await api.patch(
+        `/appointments/${selectedAppointment._id}/advice`,
+        adviceData,
+      );
+      setMessage("Advice added successfully!");
       setOpenAdvice(false);
       fetchAppointments();
     } catch (error) {
-      setMessage('Error submitting advice: ' + (error.response?.data?.message || error.message));
+      setMessage(
+        "Error submitting advice: " +
+          (error.response?.data?.message || error.message),
+      );
     }
   };
 
   const handleCreateReport = async () => {
     try {
-      await axios.post('/api/medical-records', reportData);
-      setMessage('Medical report created successfully!');
+      await api.post("/medical-records", reportData);
+      setMessage("Medical report created successfully!");
       setOpenReport(false);
-      setReportData({ patientId: '', diagnosis: '', treatment: '', notes: '' });
+      setReportData({ patientId: "", diagnosis: "", treatment: "", notes: "" });
       fetchMedicalRecords();
     } catch (error) {
       console.log(error);
-      setMessage('Error creating report: ' + (error.response?.data?.message || error.message));
+      setMessage(
+        "Error creating report: " +
+          (error.response?.data?.message || error.message),
+      );
     }
   };
 
   const viewPatientHistory = async (patientId) => {
-    // In a real app, you might fetch specific history here. 
-    // For now, we filter existing loaded data for simplicity, 
+    // In a real app, you might fetch specific history here.
+    // For now, we filter existing loaded data for simplicity,
     // but ideally we should hit an endpoint like /api/patients/:id/history
-    const patientAppointments = appointments.filter(a => a.patientId?._id === patientId);
-    const patientRecords = medicalRecords.filter(r => r.patientId?._id === patientId);
+    const patientAppointments = appointments.filter(
+      (a) => a.patientId?._id === patientId,
+    );
+    const patientRecords = medicalRecords.filter(
+      (r) => r.patientId?._id === patientId,
+    );
 
     setSelectedPatientHistory({
       appointments: patientAppointments,
-      records: patientRecords
+      records: patientRecords,
     });
     setOpenHistory(true);
   };
 
-
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
-      case 'confirmed': return 'success';
-      case 'pending': return 'warning';
-      case 'cancelled': return 'error';
-      default: return 'default';
+      case "confirmed":
+        return "success";
+      case "pending":
+        return "warning";
+      case "cancelled":
+        return "error";
+      default:
+        return "default";
     }
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', pb: 4 }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default", pb: 4 }}>
       {/* Navigation */}
-      <AppBar position="sticky" elevation={0} sx={{ bgcolor: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(12px)', borderBottom: '1px solid', borderColor: 'divider' }}>
+      <AppBar
+        position="sticky"
+        elevation={0}
+        sx={{
+          bgcolor: "rgba(255,255,255,0.8)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid",
+          borderColor: "divider",
+        }}
+      >
         <Toolbar sx={{ gap: 2 }}>
-          <Box sx={{ p: 1, bgcolor: alpha(theme.palette.primary.main, 0.1), borderRadius: '12px', color: 'primary.main', display: 'flex' }}>
+          <Box
+            sx={{
+              p: 1,
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              borderRadius: "12px",
+              color: "primary.main",
+              display: "flex",
+            }}
+          >
             <MedicalServices />
           </Box>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 700, color: 'text.primary', letterSpacing: '-0.02em' }}>
-            Doctor<Box component="span" sx={{ color: 'primary.main' }}>Portal</Box>
+          <Typography
+            variant="h6"
+            component="div"
+            sx={{
+              flexGrow: 1,
+              fontWeight: 700,
+              color: "text.primary",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Doctor
+            <Box component="span" sx={{ color: "primary.main" }}>
+              Portal
+            </Box>
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Button
               color="inherit"
-              onClick={() => navigate('/profile')}
+              onClick={() => navigate("/profile")}
               startIcon={<Person />}
-              sx={{ borderRadius: '10px', px: 2 }}
+              sx={{ borderRadius: "10px", px: 2 }}
             >
               Profile
             </Button>
@@ -210,7 +269,7 @@ const DoctorDashboard = () => {
               color="error"
               onClick={handleLogout}
               startIcon={<Logout />}
-              sx={{ borderRadius: '10px', px: 2, boxShadow: 'none' }}
+              sx={{ borderRadius: "10px", px: 2, boxShadow: "none" }}
             >
               Logout
             </Button>
@@ -220,14 +279,20 @@ const DoctorDashboard = () => {
 
       <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
         <PageHeader
-          title={`Welcome back, Dr. ${user?.firstName || 'Doctor'}`}
+          title={`Welcome back, Dr. ${user?.firstName || "Doctor"}`}
           subtitle="Manage your appointments and patient records effectively"
           action={
             <Button
               variant="contained"
               startIcon={<AddBox />}
               onClick={() => setOpenReport(true)}
-              sx={{ px: 3, py: 1.5, borderRadius: '12px', fontSize: '1rem', fontWeight: 600 }}
+              sx={{
+                px: 3,
+                py: 1.5,
+                borderRadius: "12px",
+                fontSize: "1rem",
+                fontWeight: 600,
+              }}
             >
               Create New Report
             </Button>
@@ -236,9 +301,9 @@ const DoctorDashboard = () => {
 
         {message && (
           <Alert
-            severity={message.includes('Error') ? 'error' : 'success'}
-            sx={{ mb: 3, borderRadius: '16px' }}
-            onClose={() => setMessage('')}
+            severity={message.includes("Error") ? "error" : "success"}
+            sx={{ mb: 3, borderRadius: "16px" }}
+            onClose={() => setMessage("")}
           >
             {message}
           </Alert>
@@ -257,7 +322,7 @@ const DoctorDashboard = () => {
           <Grid item xs={12} sm={6} md={3}>
             <StatsCard
               title="Pending Requests"
-              value={appointments.filter(a => a.status === 'pending').length}
+              value={appointments.filter((a) => a.status === "pending").length}
               icon={Schedule}
               color={theme.palette.warning.main}
             />
@@ -265,7 +330,9 @@ const DoctorDashboard = () => {
           <Grid item xs={12} sm={6} md={3}>
             <StatsCard
               title="Confirmed Today"
-              value={appointments.filter(a => a.status === 'confirmed').length}
+              value={
+                appointments.filter((a) => a.status === "confirmed").length
+              }
               icon={CheckCircle}
               color={theme.palette.success.main}
             />
@@ -284,11 +351,11 @@ const DoctorDashboard = () => {
         <Paper
           elevation={0}
           sx={{
-            borderRadius: '24px',
-            border: '1px solid',
-            borderColor: 'divider',
-            overflow: 'hidden',
-            boxShadow: '0 4px 20px -5px rgba(0,0,0,0.05)'
+            borderRadius: "24px",
+            border: "1px solid",
+            borderColor: "divider",
+            overflow: "hidden",
+            boxShadow: "0 4px 20px -5px rgba(0,0,0,0.05)",
           }}
         >
           <Tabs
@@ -296,19 +363,27 @@ const DoctorDashboard = () => {
             onChange={handleTabChange}
             sx={{
               borderBottom: 1,
-              borderColor: 'divider',
-              bgcolor: 'background.paper',
+              borderColor: "divider",
+              bgcolor: "background.paper",
               px: 2,
-              '& .MuiTab-root': {
+              "& .MuiTab-root": {
                 minHeight: 64,
-                fontSize: '0.95rem',
+                fontSize: "0.95rem",
                 fontWeight: 600,
-                textTransform: 'none',
-              }
+                textTransform: "none",
+              },
             }}
           >
-            <Tab label="Appointments" icon={<CalendarToday sx={{ fontSize: 20 }} />} iconPosition="start" />
-            <Tab label="Medical Records" icon={<MedicalServices sx={{ fontSize: 20 }} />} iconPosition="start" />
+            <Tab
+              label="Appointments"
+              icon={<CalendarToday sx={{ fontSize: 20 }} />}
+              iconPosition="start"
+            />
+            <Tab
+              label="Medical Records"
+              icon={<MedicalServices sx={{ fontSize: 20 }} />}
+              iconPosition="start"
+            />
           </Tabs>
 
           {/* Appointments Tab */}
@@ -317,12 +392,32 @@ const DoctorDashboard = () => {
               <TableContainer>
                 <Table sx={{ minWidth: 800 }}>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: 'grey.50' }}>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Date & Time</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Patient</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Reason</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Status</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Actions</TableCell>
+                    <TableRow sx={{ bgcolor: "grey.50" }}>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Date & Time
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Patient
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Reason
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Status
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Actions
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -331,44 +426,76 @@ const DoctorDashboard = () => {
                         key={appointment._id}
                         hover
                         sx={{
-                          '&:last-child td, &:last-child th': { border: 0 },
-                          transition: 'all 0.2s',
-                          '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.02) }
+                          "&:last-child td, &:last-child th": { border: 0 },
+                          transition: "all 0.2s",
+                          "&:hover": {
+                            bgcolor: alpha(theme.palette.primary.main, 0.02),
+                          },
                         }}
                       >
                         <TableCell>
-                          <Typography variant="body2" fontWeight={600} color="text.primary">
-                            {new Date(appointment.appointmentDate).toLocaleDateString()}
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                            color="text.primary"
+                          >
+                            {new Date(
+                              appointment.appointmentDate,
+                            ).toLocaleDateString()}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                            <Schedule sx={{ fontSize: 14 }} /> {appointment.appointmentTime}
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 0.5,
+                            }}
+                          >
+                            <Schedule sx={{ fontSize: 14 }} />{" "}
+                            {appointment.appointmentTime}
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1.5,
+                            }}
+                          >
                             <Avatar
                               sx={{
                                 width: 40,
                                 height: 40,
                                 bgcolor: alpha(theme.palette.primary.main, 0.1),
-                                color: 'primary.main',
-                                fontWeight: 700
+                                color: "primary.main",
+                                fontWeight: 700,
                               }}
                             >
                               {appointment.patientId?.firstName?.[0]}
                             </Avatar>
                             <Box>
                               <Typography variant="body2" fontWeight={600}>
-                                {appointment.patientId?.firstName} {appointment.patientId?.lastName}
+                                {appointment.patientId?.firstName}{" "}
+                                {appointment.patientId?.lastName}
                               </Typography>
-                              <Typography variant="caption" color="text.secondary">
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
                                 {appointment.patientId?.phone}
                               </Typography>
                             </Box>
                           </Box>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 200 }} noWrap>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ maxWidth: 200 }}
+                            noWrap
+                          >
                             {appointment.reason}
                           </Typography>
                         </TableCell>
@@ -377,7 +504,11 @@ const DoctorDashboard = () => {
                             label={appointment.status}
                             color={getStatusColor(appointment.status)}
                             size="small"
-                            sx={{ fontWeight: 600, borderRadius: '8px', textTransform: 'capitalize' }}
+                            sx={{
+                              fontWeight: 600,
+                              borderRadius: "8px",
+                              textTransform: "capitalize",
+                            }}
                           />
                         </TableCell>
                         <TableCell>
@@ -386,9 +517,11 @@ const DoctorDashboard = () => {
                               size="small"
                               variant="outlined"
                               color="success"
-                              onClick={() => handleStatusChange(appointment._id, 'confirmed')}
-                              disabled={appointment.status !== 'pending'}
-                              sx={{ borderRadius: '8px' }}
+                              onClick={() =>
+                                handleStatusChange(appointment._id, "confirmed")
+                              }
+                              disabled={appointment.status !== "pending"}
+                              sx={{ borderRadius: "8px" }}
                             >
                               Confirm
                             </Button>
@@ -398,14 +531,16 @@ const DoctorDashboard = () => {
                               color="primary"
                               disableElevation
                               onClick={() => handleOpenAdvice(appointment)}
-                              sx={{ borderRadius: '8px' }}
+                              sx={{ borderRadius: "8px" }}
                             >
                               Advise
                             </Button>
                             <IconButton
                               size="small"
-                              onClick={() => viewPatientHistory(appointment.patientId?._id)}
-                              sx={{ color: 'text.secondary' }}
+                              onClick={() =>
+                                viewPatientHistory(appointment.patientId?._id)
+                              }
+                              sx={{ color: "text.secondary" }}
                             >
                               <History />
                             </IconButton>
@@ -416,9 +551,18 @@ const DoctorDashboard = () => {
                     {appointments.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={5} align="center" sx={{ py: 8 }}>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              opacity: 0.5,
+                            }}
+                          >
                             <CalendarToday sx={{ fontSize: 48, mb: 1 }} />
-                            <Typography variant="h6">No appointments found</Typography>
+                            <Typography variant="h6">
+                              No appointments found
+                            </Typography>
                           </Box>
                         </TableCell>
                       </TableRow>
@@ -435,11 +579,27 @@ const DoctorDashboard = () => {
               <TableContainer>
                 <Table sx={{ minWidth: 650 }}>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: 'grey.50' }}>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Date</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Patient</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Diagnosis</TableCell>
-                      <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>Treatment</TableCell>
+                    <TableRow sx={{ bgcolor: "grey.50" }}>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Date
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Patient
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Diagnosis
+                      </TableCell>
+                      <TableCell
+                        sx={{ fontWeight: 600, color: "text.secondary" }}
+                      >
+                        Treatment
+                      </TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -448,32 +608,62 @@ const DoctorDashboard = () => {
                         key={record._id}
                         hover
                         sx={{
-                          '&:last-child td, &:last-child th': { border: 0 },
-                          transition: 'all 0.2s',
-                          '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.02) }
+                          "&:last-child td, &:last-child th": { border: 0 },
+                          transition: "all 0.2s",
+                          "&:hover": {
+                            bgcolor: alpha(theme.palette.primary.main, 0.02),
+                          },
                         }}
                       >
                         <TableCell>
-                          <Typography variant="body2" fontWeight={600} color="text.primary">
+                          <Typography
+                            variant="body2"
+                            fontWeight={600}
+                            color="text.primary"
+                          >
                             {new Date(record.createdAt).toLocaleDateString()}
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                            <Avatar sx={{ width: 32, height: 32, bgcolor: alpha(theme.palette.secondary.main, 0.1), color: 'secondary.main' }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1.5,
+                            }}
+                          >
+                            <Avatar
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                bgcolor: alpha(
+                                  theme.palette.secondary.main,
+                                  0.1,
+                                ),
+                                color: "secondary.main",
+                              }}
+                            >
                               {record.patientId?.firstName?.[0]}
                             </Avatar>
                             <Typography variant="body2" fontWeight={600}>
-                              {record.patientId?.firstName} {record.patientId?.lastName}
+                              {record.patientId?.firstName}{" "}
+                              {record.patientId?.lastName}
                             </Typography>
                           </Box>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2">{record.diagnosis}</Typography>
+                          <Typography variant="body2">
+                            {record.diagnosis}
+                          </Typography>
                         </TableCell>
                         <TableCell>
-                          <Typography variant="body2" color="text.secondary" noWrap sx={{ maxWidth: 300 }}>
-                            {record.treatment || '-'}
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            noWrap
+                            sx={{ maxWidth: 300 }}
+                          >
+                            {record.treatment || "-"}
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -481,9 +671,18 @@ const DoctorDashboard = () => {
                     {medicalRecords.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={4} align="center" sx={{ py: 8 }}>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', opacity: 0.5 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              opacity: 0.5,
+                            }}
+                          >
                             <MedicalServices sx={{ fontSize: 48, mb: 1 }} />
-                            <Typography variant="h6">No medical records found</Typography>
+                            <Typography variant="h6">
+                              No medical records found
+                            </Typography>
                           </Box>
                         </TableCell>
                       </TableRow>
@@ -496,9 +695,13 @@ const DoctorDashboard = () => {
         </Paper>
       </Container>
 
-
       {/* Advice Dialog */}
-      <Dialog open={openAdvice} onClose={() => setOpenAdvice(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={openAdvice}
+        onClose={() => setOpenAdvice(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>Medical Advice & Prescription</DialogTitle>
         <DialogContent dividers>
           <TextField
@@ -507,7 +710,9 @@ const DoctorDashboard = () => {
             multiline
             rows={4}
             value={adviceData.advice}
-            onChange={(e) => setAdviceData({ ...adviceData, advice: e.target.value })}
+            onChange={(e) =>
+              setAdviceData({ ...adviceData, advice: e.target.value })
+            }
             margin="normal"
           />
           <TextField
@@ -516,20 +721,28 @@ const DoctorDashboard = () => {
             multiline
             rows={4}
             value={adviceData.prescription}
-            onChange={(e) => setAdviceData({ ...adviceData, prescription: e.target.value })}
+            onChange={(e) =>
+              setAdviceData({ ...adviceData, prescription: e.target.value })
+            }
             margin="normal"
             helperText="Enter medications, dosage, and frequency"
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenAdvice(false)}>Cancel</Button>
-          <Button onClick={handleSubmitAdvice} variant="contained">Submit</Button>
+          <Button onClick={handleSubmitAdvice} variant="contained">
+            Submit
+          </Button>
         </DialogActions>
       </Dialog>
 
-
       {/* Create Report Dialog */}
-      <Dialog open={openReport} onClose={() => setOpenReport(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={openReport}
+        onClose={() => setOpenReport(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>Create New Medical Report</DialogTitle>
         <DialogContent dividers>
           <TextField
@@ -538,12 +751,21 @@ const DoctorDashboard = () => {
             label="Select Patient"
             margin="normal"
             value={reportData.patientId}
-            onChange={(e) => setReportData({ ...reportData, patientId: e.target.value })}
+            onChange={(e) =>
+              setReportData({ ...reportData, patientId: e.target.value })
+            }
           >
             {/* Unique patients from appointments */}
-            {[...new Map(appointments.map(item => [item.patientId?._id, item.patientId])).values()]
-              .filter(p => p) // filter undefined
-              .map(patient => (
+            {[
+              ...new Map(
+                appointments.map((item) => [
+                  item.patientId?._id,
+                  item.patientId,
+                ]),
+              ).values(),
+            ]
+              .filter((p) => p) // filter undefined
+              .map((patient) => (
                 <MenuItem key={patient._id} value={patient._id}>
                   {patient.firstName} {patient.lastName} ({patient.phone})
                 </MenuItem>
@@ -553,7 +775,9 @@ const DoctorDashboard = () => {
             fullWidth
             label="Diagnosis"
             value={reportData.diagnosis}
-            onChange={(e) => setReportData({ ...reportData, diagnosis: e.target.value })}
+            onChange={(e) =>
+              setReportData({ ...reportData, diagnosis: e.target.value })
+            }
             margin="normal"
           />
           <TextField
@@ -562,7 +786,9 @@ const DoctorDashboard = () => {
             multiline
             rows={3}
             value={reportData.treatment}
-            onChange={(e) => setReportData({ ...reportData, treatment: e.target.value })}
+            onChange={(e) =>
+              setReportData({ ...reportData, treatment: e.target.value })
+            }
             margin="normal"
           />
           <TextField
@@ -571,33 +797,48 @@ const DoctorDashboard = () => {
             multiline
             rows={2}
             value={reportData.notes}
-            onChange={(e) => setReportData({ ...reportData, notes: e.target.value })}
+            onChange={(e) =>
+              setReportData({ ...reportData, notes: e.target.value })
+            }
             margin="normal"
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenReport(false)}>Cancel</Button>
-          <Button onClick={handleCreateReport} variant="contained">Create Report</Button>
+          <Button onClick={handleCreateReport} variant="contained">
+            Create Report
+          </Button>
         </DialogActions>
       </Dialog>
 
       {/* Patient History Dialog */}
-      <Dialog open={openHistory} onClose={() => setOpenHistory(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={openHistory}
+        onClose={() => setOpenHistory(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>Patient History</DialogTitle>
         <DialogContent dividers>
           {selectedPatientHistory && (
             <Box>
-              <Typography variant="h6" gutterBottom>Past Appointments</Typography>
+              <Typography variant="h6" gutterBottom>
+                Past Appointments
+              </Typography>
               {selectedPatientHistory.appointments.length > 0 ? (
                 <List>
-                  {selectedPatientHistory.appointments.map(apt => (
+                  {selectedPatientHistory.appointments.map((apt) => (
                     <React.Fragment key={apt._id}>
                       <ListItem alignItems="flex-start">
                         <ListItemText
                           primary={`${new Date(apt.appointmentDate).toLocaleDateString()} - ${apt.status}`}
                           secondary={
                             <React.Fragment>
-                              <Typography component="span" variant="body2" color="text.primary">
+                              <Typography
+                                component="span"
+                                variant="body2"
+                                color="text.primary"
+                              >
                                 Reason: {apt.reason}
                               </Typography>
                               {apt.advice && <br />}
@@ -610,12 +851,18 @@ const DoctorDashboard = () => {
                     </React.Fragment>
                   ))}
                 </List>
-              ) : <Typography color="text.secondary">No past appointments.</Typography>}
+              ) : (
+                <Typography color="text.secondary">
+                  No past appointments.
+                </Typography>
+              )}
 
-              <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>Medical Records</Typography>
+              <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+                Medical Records
+              </Typography>
               {selectedPatientHistory.records.length > 0 ? (
                 <List>
-                  {selectedPatientHistory.records.map(rec => (
+                  {selectedPatientHistory.records.map((rec) => (
                     <React.Fragment key={rec._id}>
                       <ListItem alignItems="flex-start">
                         <ListItemText
@@ -627,7 +874,11 @@ const DoctorDashboard = () => {
                     </React.Fragment>
                   ))}
                 </List>
-              ) : <Typography color="text.secondary">No medical records.</Typography>}
+              ) : (
+                <Typography color="text.secondary">
+                  No medical records.
+                </Typography>
+              )}
             </Box>
           )}
         </DialogContent>
@@ -635,7 +886,6 @@ const DoctorDashboard = () => {
           <Button onClick={() => setOpenHistory(false)}>Close</Button>
         </DialogActions>
       </Dialog>
-
     </Box>
   );
 };
